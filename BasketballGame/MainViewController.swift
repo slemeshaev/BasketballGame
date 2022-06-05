@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  MainViewController.swift
 //  BasketballGame
 //
 //  Created by Stanislav Lemeshaev on 31.05.2022.
@@ -8,7 +8,7 @@
 
 import ARKit
 
-class ViewController: UIViewController, ARSCNViewDelegate {
+class MainViewController: UIViewController {
     
     // MARK: - IBOutlets
     @IBOutlet private var sceneView: ARSCNView!
@@ -26,11 +26,9 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        // Create a session configuration
         let configuration = ARWorldTrackingConfiguration()
+        configuration.planeDetection = .vertical
         
-        // Run the view's session
         sceneView.session.run(configuration)
     }
     
@@ -41,16 +39,27 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.session.pause()
     }
     
-    // MARK: - ARSCNViewDelegate
-    func session(_ session: ARSession, didFailWithError error: Error) {
-        // Present an error message to the user
+    // MARK: - Private
+    private func hoopNode() -> SCNNode {
+        guard let scene = SCNScene(named: "Hoop.scn", inDirectory: "art.scnassets") else {
+            return SCNNode()
+        }
+        
+        let hoopNode = scene.rootNode.clone()
+        hoopNode.eulerAngles.x -= .pi / 2
+        
+        return hoopNode
     }
+}
+
+// MARK: - ARSCNViewDelegate
+extension MainViewController: ARSCNViewDelegate {
     
-    func sessionWasInterrupted(_ session: ARSession) {
-        // Inform the user that the session has been interrupted, for example, by presenting an overlay
-    }
-    
-    func sessionInterruptionEnded(_ session: ARSession) {
-        // Reset tracking and/or remove existing anchors if consistent tracking is required
+    func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
+        guard let planeAnchor = anchor as? ARPlaneAnchor, planeAnchor.alignment == .vertical else {
+            return
+        }
+        
+        node.addChildNode(hoopNode())
     }
 }
