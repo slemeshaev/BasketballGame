@@ -50,6 +50,31 @@ class MainViewController: UIViewController {
         
         return hoopNode
     }
+    
+    private func planeNode(for anchor: ARPlaneAnchor) -> SCNNode {
+        let extent = anchor.extent
+        
+        let plane = SCNPlane(width: CGFloat(extent.x), height: CGFloat(extent.z))
+        plane.firstMaterial?.diffuse.contents = UIColor.green
+        
+        let planeNode = SCNNode(geometry: plane)
+        planeNode.eulerAngles.x -= .pi / 2
+        planeNode.opacity = 0.25
+        
+        return planeNode
+    }
+    
+    private func updatePlaneNode(_ node: SCNNode, for anchor: ARPlaneAnchor) {
+        guard let planeNode = node.childNodes.first, let plane = planeNode.geometry as? SCNPlane else {
+            return
+        }
+        
+        planeNode.simdPosition = anchor.center
+        
+        let extent = anchor.extent
+        plane.width = CGFloat(extent.x)
+        plane.height = CGFloat(extent.z)
+    }
 }
 
 // MARK: - ARSCNViewDelegate
@@ -60,6 +85,14 @@ extension MainViewController: ARSCNViewDelegate {
             return
         }
         
-        node.addChildNode(hoopNode())
+        node.addChildNode(planeNode(for: planeAnchor))
+    }
+    
+    func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
+        guard let planeAnchor = anchor as? ARPlaneAnchor, planeAnchor.alignment == .vertical else {
+            return
+        }
+        
+        updatePlaneNode(node, for: planeAnchor)
     }
 }
