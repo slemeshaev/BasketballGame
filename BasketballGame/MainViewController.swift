@@ -13,6 +13,16 @@ class MainViewController: UIViewController {
     // MARK: - IBOutlets
     @IBOutlet private var sceneView: ARSCNView!
     
+    // MARK: - Properties
+    private let configuration = ARWorldTrackingConfiguration()
+    
+    private var isHoopAdded = false {
+        didSet {
+            configuration.planeDetection = []
+            sceneView.session.run(configuration, options: .removeExistingAnchors)
+        }
+    }
+    
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,9 +36,7 @@ class MainViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        let configuration = ARWorldTrackingConfiguration()
         configuration.planeDetection = .vertical
-        
         sceneView.session.run(configuration)
     }
     
@@ -39,6 +47,32 @@ class MainViewController: UIViewController {
         sceneView.session.pause()
     }
     
+    // MARK: - IBActions
+    @IBAction private func userTapped(_ sender: UITapGestureRecognizer) {
+        let location = sender.location(in: sceneView)
+        
+        guard let query = sceneView.raycastQuery(from: location, allowing: .existingPlaneGeometry, alignment: .vertical) else {
+            return
+        }
+        
+        let results = sceneView.session.raycast(query)
+        
+        guard let result = results.first else {
+            return
+        }
+        
+        if isHoopAdded {
+            // Add basketballs
+        } else {
+            let hoopNode = hoopNode()
+            hoopNode.simdTransform = result.worldTransform
+            hoopNode.eulerAngles.x -= .pi / 2
+            
+            isHoopAdded = true
+            sceneView.scene.rootNode.addChildNode(hoopNode)
+        }
+    }
+    
     // MARK: - Private
     private func hoopNode() -> SCNNode {
         guard let scene = SCNScene(named: "Hoop.scn", inDirectory: "art.scnassets") else {
@@ -46,7 +80,6 @@ class MainViewController: UIViewController {
         }
         
         let hoopNode = scene.rootNode.clone()
-        hoopNode.eulerAngles.x -= .pi / 2
         
         return hoopNode
     }
