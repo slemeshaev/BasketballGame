@@ -49,21 +49,22 @@ class MainViewController: UIViewController {
     
     // MARK: - IBActions
     @IBAction private func userTapped(_ sender: UITapGestureRecognizer) {
-        let location = sender.location(in: sceneView)
-        
-        guard let query = sceneView.raycastQuery(from: location, allowing: .existingPlaneGeometry, alignment: .vertical) else {
-            return
-        }
-        
-        let results = sceneView.session.raycast(query)
-        
-        guard let result = results.first else {
-            return
-        }
-        
         if isHoopAdded {
-            // Add basketballs
+            guard let ballNode = ballNode() else { return }
+            sceneView.scene.rootNode.addChildNode(ballNode)
         } else {
+            let location = sender.location(in: sceneView)
+            
+            guard let query = sceneView.raycastQuery(from: location, allowing: .existingPlaneGeometry, alignment: .vertical) else {
+                return
+            }
+            
+            let results = sceneView.session.raycast(query)
+            
+            guard let result = results.first else {
+                return
+            }
+            
             let hoopNode = hoopNode()
             hoopNode.simdTransform = result.worldTransform
             hoopNode.eulerAngles.x -= .pi / 2
@@ -74,6 +75,21 @@ class MainViewController: UIViewController {
     }
     
     // MARK: - Private
+    private func ballNode() -> SCNNode? {
+        let ball = SCNSphere(radius: 0.125)
+        ball.firstMaterial?.diffuse.contents = UIColor.orange
+        
+        let ballNode = SCNNode(geometry: ball)
+        
+        guard let frame = sceneView.session.currentFrame else {
+            return nil
+        }
+        
+        ballNode.simdTransform = frame.camera.transform
+        
+        return ballNode
+    }
+    
     private func hoopNode() -> SCNNode {
         guard let scene = SCNScene(named: "Hoop.scn", inDirectory: "art.scnassets") else {
             return SCNNode()
