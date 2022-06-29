@@ -76,16 +76,29 @@ class MainViewController: UIViewController {
     
     // MARK: - Private
     private func ballNode() -> SCNNode? {
+        guard let frame = sceneView.session.currentFrame else {
+            return nil
+        }
+        
+        let cameraTransform = frame.camera.transform
+        let matrixCameraTransform = SCNMatrix4(cameraTransform)
+        
         let ball = SCNSphere(radius: 0.125)
         ball.firstMaterial?.diffuse.contents = UIColor.orange
         
         let ballNode = SCNNode(geometry: ball)
         
-        guard let frame = sceneView.session.currentFrame else {
-            return nil
-        }
+        ballNode.physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape())
         
-        ballNode.simdTransform = frame.camera.transform
+        let power = Float(5)
+        let x = -matrixCameraTransform.m31 * power
+        let y = -matrixCameraTransform.m32 * power
+        let z = -matrixCameraTransform.m33 * power
+        
+        let forceDirection = SCNVector3(x, y, z)
+        ballNode.physicsBody?.applyForce(forceDirection, asImpulse: true)
+        
+        ballNode.simdTransform = cameraTransform
         
         return ballNode
     }
