@@ -88,7 +88,7 @@ class MainViewController: UIViewController {
         
         let ballNode = SCNNode(geometry: ball)
         
-        ballNode.physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape())
+        ballNode.physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(node: ballNode))
         
         let power = Float(5)
         let x = -matrixCameraTransform.m31 * power
@@ -109,6 +109,9 @@ class MainViewController: UIViewController {
         }
         
         let hoopNode = scene.rootNode.clone()
+        
+        let options = [SCNPhysicsShape.Option.type : SCNPhysicsShape.ShapeType.concavePolyhedron]
+        hoopNode.physicsBody = SCNPhysicsBody(type: .static, shape: SCNPhysicsShape(node: hoopNode, options: options))
         
         return hoopNode
     }
